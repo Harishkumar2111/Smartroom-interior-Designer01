@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>SmartRoom Studio — Interactive Wall &amp; Ceiling Painter</title>
+  <meta name="description" content="Dedicated interactive room painting studio. Upload any room photo, paint walls and ceilings with brushes, polygon fills, and designer paint palettes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="paint_studio.css?v=light-20261030">
+</head>
+<body>
+  <div class="studio-app">
+    <!-- Top Header Bar -->
+    <header class="studio-header">
+      <div class="header-left">
+        <a href="index.html" class="back-link" title="Return to main dashboard">← Back to Dashboard</a>
+        <div class="brand-divider"></div>
+        <div class="brand-title">
+          <span class="brand-icon">🎨</span>
+          <div>
+            <h1>Room Paint &amp; Ceiling Studio</h1>
+            <span class="brand-sub">Precision Wall Coloring, Ceiling Accents &amp; Tinting</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <!-- Quick Preset Target -->
+        <div class="target-selector">
+          <span class="selector-label">Target Surface:</span>
+          <div class="segmented-control" id="targetSurfaceGroup">
+            <button class="segment-btn active" data-target="wall">🖌️ Walls</button>
+            <button class="segment-btn" data-target="accent">✨ Accent Wall</button>
+            <button class="segment-btn" data-target="ceiling">☁️ Ceiling</button>
+            <button class="segment-btn" data-target="trim">🚪 Trim &amp; Moulding</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <label class="btn btn-outline" id="btnUploadImage">
+          📷 Upload Room Photo
+          <input type="file" id="roomImageInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        </label>
+        <button class="btn btn-secondary" id="btnClearCanvas" title="Reset all applied paint layers">
+          🔄 Reset Paint
+        </button>
+        <button class="btn btn-primary" id="btnDownloadArt">
+          ⬇️ Download Design
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="studio-workspace">
+      <!-- Left Tool & Color Palette Sidebar -->
+      <aside class="studio-sidebar">
+        <!-- Section: Tool Selection -->
+        <div class="sidebar-card">
+          <div class="card-header">
+            <h3>🖌️ Painting Tools</h3>
+          </div>
+          <div class="tools-grid">
+            <button class="tool-btn active" data-tool="brush" id="toolBrush">
+              <span class="tool-icon">🖌️</span>
+              <span class="tool-name">Freehand Brush</span>
+            </button>
+            <button class="tool-btn" data-tool="polygon" id="toolPolygon">
+              <span class="tool-icon">📐</span>
+              <span class="tool-name">Polygon Wall Zone</span>
+            </button>
+            <button class="tool-btn" data-tool="tint" id="toolTint">
+              <span class="tool-icon">✨</span>
+              <span class="tool-name">Global Room Tint</span>
+            </button>
+            <button class="tool-btn" data-tool="eraser" id="toolEraser">
+              <span class="tool-icon">🧼</span>
+              <span class="tool-name">Paint Eraser</span>
+            </button>
+          </div>
+
+          <!-- Tool Settings: Brush Size & Opacity -->
+          <div class="tool-params">
+            <div class="slider-row" id="brushSizeRow">
+              <div class="slider-header">
+                <span>Brush Size</span>
+                <b id="brushSizeLabel">35px</b>
+              </div>
+              <input type="range" id="brushSizeSlider" min="5" max="120" value="35">
+            </div>
+
+            <div class="slider-row">
+              <div class="slider-header">
+                <span>Paint Opacity (Alpha)</span>
+                <b id="paintOpacityLabel">40%</b>
+              </div>
+              <input type="range" id="paintOpacitySlider" min="10" max="95" value="40">
+            </div>
+
+            <!-- Blend Mode Selection -->
+            <div class="form-row">
+              <label for="blendModeSelect">Blend Mode:</label>
+              <select id="blendModeSelect" class="form-select">
+                <option value="source-over">Realistic Tint (Natural)</option>
+                <option value="multiply">Multiply (Shadows Retained)</option>
+                <option value="color">Colorize (Texture Preserved)</option>
+                <option value="soft-light">Soft Light (Subtle)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Curated Paint Palettes -->
+        <div class="sidebar-card scrollable-card">
+          <div class="card-header">
+            <h3>🎨 Designer Palettes</h3>
+            <span class="swatch-count" id="swatchCountLabel">24 Swatches</span>
+          </div>
+
+          <!-- Palette Category Tabs -->
+          <div class="palette-tabs" id="paletteTabs">
+            <button class="pal-tab active" data-category="neutrals">Warm Neutrals</button>
+            <button class="pal-tab" data-category="blues">Sky &amp; Blues</button>
+            <button class="pal-tab" data-category="greens">Soft Greens</button>
+            <button class="pal-tab" data-category="warm">Earth &amp; Terracotta</button>
+            <button class="pal-tab" data-category="luxury">Moody &amp; Accent</button>
+          </div>
+
+          <!-- Color Swatches Grid -->
+          <div class="swatches-grid" id="swatchesGrid"></div>
+
+          <!-- Custom Color Picker Input -->
+          <div class="custom-color-box">
+            <div class="custom-color-header">
+              <span>Custom Color:</span>
+              <span id="currentColorDisplay">#E8ECE9</span>
+            </div>
+            <div class="custom-color-inputs">
+              <input type="color" id="nativeColorPicker" value="#E8ECE9">
+              <input type="text" id="hexColorInput" value="#E8ECE9" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center Interactive Painting Canvas -->
+      <section class="canvas-viewport" id="canvasViewport">
+        <!-- Floating Canvas Action Bar -->
+        <div class="canvas-toolbar">
+          <button class="toolbar-btn" id="btnUndo" title="Undo stroke (Ctrl+Z)">
+            ↩ Undo
+          </button>
+          <button class="toolbar-btn" id="btnRedo" title="Redo stroke (Ctrl+Y)">
+            ↪ Redo
+          </button>
+          <div class="toolbar-sep"></div>
+          <span class="canvas-zoom-info" id="polygonTip" style="display:none;">
+            📐 Click points on wall to define corners. Double-click or click "Fill Zone" to complete!
+          </span>
+          <button class="btn btn-sm btn-accent" id="btnFinishPolygon" style="display:none;">
+            ✓ Fill Wall Zone
+          </button>
+          <button class="btn btn-sm btn-outline" id="btnCancelPolygon" style="display:none;">
+            ✕ Cancel
+          </button>
+        </div>
+
+        <!-- Empty State Prompt (Before upload) -->
+        <div class="empty-canvas-dropzone" id="emptyDropzone">
+          <div class="dropzone-inner">
+            <div class="drop-icon">🎨</div>
+            <h2>Drop your room photo here to start painting</h2>
+            <p>Support for JPG, PNG, and WebP up to 15MB. Or choose an architectural sample room below:</p>
+            <div class="sample-rooms-row">
+              <button class="sample-btn" data-url="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&auto=format&fit=crop&q=80">
+                🛋️ Living Room Sample
+              </button>
+              <button class="sample-btn" data-url="https://images.unsplash.com/photo-1540518614846-7ede433c4ef7?w=1200&auto=format&fit=crop&q=80">
+                🛏️ Bedroom Sample
+              </button>
+              <button class="sample-btn" data-url="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1200&auto=format&fit=crop&q=80">
+                🍽️ Kitchen Sample
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- The Canvas Stage Container -->
+        <div class="canvas-stage" id="canvasStage" style="display:none;">
+          <canvas id="paintCanvas"></canvas>
+          <!-- Polygon guideline overlay canvas -->
+          <canvas id="overlayCanvas"></canvas>
+        </div>
+      </section>
+
+      <!-- Right Properties & History Sidebar -->
+      <aside class="studio-sidebar-right">
+        <div class="sidebar-card">
+          <div class="card-header">
+            <h3>📊 Paint &amp; Surface Summary</h3>
+          </div>
+          <div class="summary-list">
+            <div class="summary-item">
+              <span class="sum-label">Active Surface</span>
+              <b class="sum-val" id="sumActiveSurface">Walls (General)</b>
+            </div>
+            <div class="summary-item">
+              <span class="sum-label">Current Color</span>
+              <div class="sum-color-badge">
+                <span class="color-dot" id="sumColorDot" style="background:#E8ECE9;"></span>
+                <b class="sum-val" id="sumColorHex">#E8ECE9</b>
+              </div>
+            </div>
+            <div class="summary-item">
+              <span class="sum-label">Active Tool</span>
+              <b class="sum-val" id="sumToolName">Freehand Brush</b>
+            </div>
+            <div class="summary-item">
+              <span class="sum-label">Opacity</span>
+              <b class="sum-val" id="sumOpacity">40%</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <div class="card-header">
+            <h3>💡 Pro Designer Painting Tips</h3>
+          </div>
+          <ul class="tips-list">
+            <li><b>Ceiling Brightness:</b> Paint ceilings 10-20% lighter than wall colors to make rooms feel higher and airy.</li>
+            <li><b>Accent Wall:</b> Choose the architectural focal wall (behind bed or media console) for deeper contrast tones.</li>
+            <li><b>Polygon Tool:</b> Use the <b>Polygon Wall Zone</b> tool to click the 4 corners of any wall for crisp, perfectly masked borders.</li>
+            <li><b>Blend Mode:</b> Set to <i>Multiply</i> or <i>Realistic Tint</i> to preserve brick, plaster, and shadow depth.</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script src="paint_studio.js"></script>
+</body>
+</html>

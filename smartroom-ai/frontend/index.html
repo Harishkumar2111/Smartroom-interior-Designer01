@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Smart Room AI — Intelligent Interior Designer</title>
+  <meta name="description" content="AI Smart Room Interior Designer powered by Python, FastAPI, Computer Vision, and Generative AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=light-20261030">
+</head>
+<body>
+  <!-- Mobile Header -->
+  <header class="mobile-header">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation">
+      <span class="hamburger-bar"></span>
+      <span class="hamburger-bar"></span>
+      <span class="hamburger-bar"></span>
+    </button>
+    <div class="mobile-brand">
+      <span class="brand-badge-mini">✨</span>
+      <span class="brand-title-mini">Smart Room AI</span>
+    </div>
+    <button class="mobile-action-btn" id="mobileQuickSave" title="Quick Save">💾</button>
+  </header>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-header">
+        <div class="brand-badge">✨</div>
+        <div class="brand-info">
+          <h2>Smart Room AI</h2>
+          <span>Interior Studio Pro</span>
+        </div>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">✕</button>
+      </div>
+
+      <nav class="nav-links">
+        <button class="nav-btn active" data-tab="tab-analyzer" id="navAnalyzer">
+          <span class="icon">🔍</span>
+          <span class="label">AI Room Analyzer</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-calculator" id="navCalculator">
+          <span class="icon">📐</span>
+          <span class="label">Measurement Studio</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-recommendations" id="navRecommendations">
+          <span class="icon">🎨</span>
+          <span class="label">Style &amp; Recommendations</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-furniture" id="navFurniture">
+          <span class="icon">🛋️</span>
+          <span class="label">Furniture Catalog</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-design" id="navDesign">
+          <span class="icon">✨</span>
+          <span class="label">AI Design Studio</span>
+        </button>
+        <a href="paint_studio.html" class="nav-btn paint-studio-highlight" id="navPaintStudio" style="text-decoration:none;">
+          <span class="icon">🖌️</span>
+          <span class="label">Paint &amp; Ceiling Studio ✦</span>
+        </a>
+        <button class="nav-btn" data-tab="tab-projects" id="navProjects">
+          <span class="icon">📁</span>
+          <span class="label">Saved Projects</span>
+        </button>
+      </nav>
+
+
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 id="pageTitle">🔍 AI Room Analyzer</h1>
+          <p id="pageSubtitle">Upload your room photo to detect architectural flow, color palettes, and spatial placement.</p>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-primary" id="btnQuickSave">💾 Save Project</button>
+        </div>
+      </header>
+
+      <!-- TAB 1: AI Room Analyzer -->
+      <section class="tab-pane active" id="tab-analyzer">
+        <div class="grid-2col">
+          <!-- Upload & Config Card -->
+          <div class="card glass-card">
+            <h3>📷 1. Room Photo &amp; Parameters</h3>
+            <div class="upload-dropzone" id="dropzone">
+              <input type="file" id="roomPhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+              <div class="dropzone-content" id="dropzonePrompt">
+                <div class="upload-icon">📁</div>
+                <h4>Drag &amp; Drop Room Photo</h4>
+                <p>or <span class="browse-link">browse from computer</span> (JPG, PNG, WebP up to 15MB)</p>
+              </div>
+              <div class="preview-container" id="previewContainer" style="display:none;">
+                <img id="imagePreview" alt="Room Preview" />
+                <button class="btn-clear-image" id="btnClearImage" title="Remove image">✕</button>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="roomTypeSelect">Room Type</label>
+                <select id="roomTypeSelect" class="form-control">
+                  <option value="bedroom">Master Bedroom</option>
+                  <option value="living_room">Living Room</option>
+                  <option value="study">Study / Home Office</option>
+                  <option value="dining_room">Dining Room</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="roomStyleSelect">Preferred Style</label>
+                <select id="roomStyleSelect" class="form-control">
+                  <option value="Modern">Modern</option>
+                  <option value="Minimalist">Minimalist</option>
+                  <option value="Luxury">Luxury</option>
+                  <option value="Scandinavian">Scandinavian</option>
+                  <option value="Traditional Indian">Traditional Indian</option>
+                  <option value="Contemporary">Contemporary</option>
+                  <option value="Industrial">Industrial</option>
+                  <option value="Bohemian">Bohemian</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label for="analyzerLength">Length (ft)</label>
+                <input type="number" id="analyzerLength" class="form-control" value="14" step="0.5" min="4">
+              </div>
+              <div class="form-group">
+                <label for="analyzerWidth">Width (ft)</label>
+                <input type="number" id="analyzerWidth" class="form-control" value="12" step="0.5" min="4">
+              </div>
+              <div class="form-group">
+                <label for="analyzerBudget">Budget (INR ₹)</label>
+                <input type="number" id="analyzerBudget" class="form-control" value="150000" step="5000">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="analyzerNotes">Special Requests or Needs</label>
+              <textarea id="analyzerNotes" class="form-control" rows="2" placeholder="e.g. Empty room blank canvas, need ample storage, warm lighting, study corner..."></textarea>
+            </div>
+
+            <button class="btn btn-primary btn-block btn-lg" id="btnAnalyzeRoom">
+              <span class="btn-spinner" id="analyzeSpinner" style="display:none;"></span>
+              🔍 Run AI Room Analysis
+            </button>
+          </div>
+
+          <!-- Analysis Results Panel -->
+          <div class="card glass-card" id="analysisResultCard">
+            <h3>📊 Analysis &amp; Space Critique</h3>
+            <div id="analyzerEmptyState" class="empty-state">
+              <div class="empty-icon">🛋️</div>
+              <p>Upload a room photo and click "Run AI Room Analysis" to inspect detected features, spatial flow, and palettes.</p>
+            </div>
+
+            <div id="analyzerOutput" style="display:none;">
+              <div class="result-badge-row">
+                <span class="badge" id="badgeRoomType">Master Bedroom</span>
+                <span class="badge" id="badgeStyle">Modern</span>
+                <span class="badge badge-provider" id="badgeProvider">Rule-Based Architecture Engine</span>
+              </div>
+
+              <div class="critique-box" id="critiqueBox">
+                <h4>Spatial Critique</h4>
+                <p id="critiqueOverview"></p>
+                <p class="limitations-note" id="critiqueLimitations"></p>
+              </div>
+
+              <!-- Color Palette -->
+              <h4>🎨 Suggested Color Scheme</h4>
+              <div class="palette-grid" id="paletteGrid"></div>
+
+              <!-- Lighting Plan -->
+              <h4>💡 Layered Lighting Advice</h4>
+              <div class="plan-list" id="lightingPlanList"></div>
+
+              <!-- Furniture Plan -->
+              <h4>🛋️ Key Furniture Placement</h4>
+              <div class="plan-list" id="furniturePlanList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: Measurement Studio -->
+      <section class="tab-pane" id="tab-calculator">
+        <div class="grid-2col">
+          <div class="card glass-card">
+            <h3>📐 Room Dimensions &amp; Cutouts</h3>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label for="calcLength">Length</label>
+                <input type="number" id="calcLength" class="form-control" value="15" step="0.5">
+              </div>
+              <div class="form-group">
+                <label for="calcWidth">Width</label>
+                <input type="number" id="calcWidth" class="form-control" value="12" step="0.5">
+              </div>
+              <div class="form-group">
+                <label for="calcHeight">Height</label>
+                <input type="number" id="calcHeight" class="form-control" value="10" step="0.5">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="calcUnit">Measurement Unit</label>
+              <select id="calcUnit" class="form-control">
+                <option value="feet">Feet (ft)</option>
+                <option value="meters">Meters (m)</option>
+                <option value="inches">Inches (in)</option>
+              </select>
+            </div>
+
+            <div class="cutouts-section">
+              <h4>🚪 Doors &amp; Windows Deductions</h4>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Doors Count (3×7 ft std)</label>
+                  <input type="number" id="calcDoorCount" class="form-control" value="1" min="0">
+                </div>
+                <div class="form-group">
+                  <label>Windows Count (4×4 ft std)</label>
+                  <input type="number" id="calcWindowCount" class="form-control" value="1" min="0">
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-block btn-lg" id="btnCalculateMetrics">
+              📐 Calculate Precise Metrics
+            </button>
+          </div>
+
+          <div class="card glass-card">
+            <h3>📊 Spatial Geometry &amp; Paint Estimation</h3>
+            <div class="metrics-grid" id="metricsCards">
+              <div class="metric-card">
+                <span class="metric-label">Floor Area</span>
+                <span class="metric-val" id="metricFloorArea">180.0 sq ft</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Net Wall Surface</span>
+                <span class="metric-val" id="metricNetWall">503.0 sq ft</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Room Volume</span>
+                <span class="metric-val" id="metricVolume">1,800 cu ft</span>
+              </div>
+              <div class="metric-card highlight-metric">
+                <span class="metric-label">Estimated Paint (2 Coats)</span>
+                <span class="metric-val highlight" id="metricPaint">7.8 Liters</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Usable Furniture Space (~65%)</span>
+                <span class="metric-val" id="metricUsableSpace">117.0 sq ft</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Walking Pathways (~35%)</span>
+                <span class="metric-val" id="metricWalkingSpace">63.0 sq ft</span>
+              </div>
+            </div>
+
+            <div class="metric-source-box">
+              <span class="info-icon">ℹ️</span>
+              <span id="metricSourceLabel">Dimension Source: User Provided Measurements</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: Style & Recommendations -->
+      <section class="tab-pane" id="tab-recommendations">
+        <div class="card glass-card filter-bar">
+          <div class="filter-group">
+            <label>Select Room Style:</label>
+            <div class="style-pills" id="stylePills">
+              <button class="style-pill active" data-style="Modern">Modern</button>
+              <button class="style-pill" data-style="Minimalist">Minimalist</button>
+              <button class="style-pill" data-style="Luxury">Luxury</button>
+              <button class="style-pill" data-style="Scandinavian">Scandinavian</button>
+              <button class="style-pill" data-style="Traditional Indian">Traditional Indian</button>
+              <button class="style-pill" data-style="Contemporary">Contemporary</button>
+              <button class="style-pill" data-style="Industrial">Industrial</button>
+              <button class="style-pill" data-style="Bohemian">Bohemian</button>
+            </div>
+          </div>
+          <div class="budget-slider-box">
+            <label>Budget Allocation: <b id="budgetValLabel">₹1,50,000</b></label>
+            <input type="range" id="recommendationBudgetSlider" min="30000" max="600000" step="10000" value="150000">
+          </div>
+        </div>
+
+        <div class="grid-2col mt-4">
+          <!-- Wall, Ceiling & Lighting -->
+          <div class="card glass-card">
+            <h3>🎨 Architectural Finishes &amp; Ceilings</h3>
+            <div id="recFinishesContent"></div>
+          </div>
+
+          <!-- Recommended Furniture & Budget Breakdown -->
+          <div class="card glass-card">
+            <h3>🛋️ Furniture Plan &amp; INR Budget Split</h3>
+            <div id="recFurnitureContent"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: Furniture Catalog -->
+      <section class="tab-pane" id="tab-furniture">
+        <div class="card glass-card filter-bar">
+          <div class="form-row-3">
+            <input type="text" id="furnSearch" class="form-control" placeholder="Search furniture (e.g. bed, sofa, desk)...">
+            <select id="furnCategoryFilter" class="form-control">
+              <option value="">All Categories</option>
+              <option value="Bed">Beds</option>
+              <option value="Sofa">Sofas</option>
+              <option value="Table">Tables</option>
+              <option value="Desk">Desks</option>
+              <option value="Storage">Storage / Wardrobe</option>
+              <option value="Chair">Chairs</option>
+            </select>
+            <select id="furnBudgetFilter" class="form-control">
+              <option value="">Any Price</option>
+              <option value="25000">Under ₹25,000</option>
+              <option value="50000">Under ₹50,000</option>
+              <option value="80000">Under ₹80,000</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="furniture-grid mt-4" id="furnitureGrid"></div>
+      </section>
+
+      <!-- TAB 5: AI Design Studio & Interactive Room Painter -->
+      <section class="tab-pane" id="tab-design">
+        <div class="grid-2col">
+          <div class="card glass-card">
+            <h3>🎨 Room Paint &amp; Design Studio</h3>
+            <p class="section-desc">Select wall, ceiling, and accent colors to customize your room. Generate architectural overlays or open the interactive Paint Studio.</p>
+
+            <!-- Quick Style Harmonizer -->
+            <div class="form-group">
+              <label for="designStyleSelect">Design Style Palette</label>
+              <select id="designStyleSelect" class="form-control">
+                <option value="Modern">Modern (Sage White &amp; Charcoal)</option>
+                <option value="Scandinavian">Scandinavian (Mist Green &amp; Light Oak)</option>
+                <option value="Minimalist">Minimalist (Pure White &amp; Urban Gray)</option>
+                <option value="Luxury">Luxury (Midnight Navy &amp; Warm Gold)</option>
+                <option value="Traditional Indian">Traditional Indian (Terracotta &amp; Teak)</option>
+                <option value="Contemporary">Contemporary (Warm Greige &amp; Black)</option>
+                <option value="Industrial">Industrial (Concrete Gray &amp; Rusty Bronze)</option>
+                <option value="Bohemian">Bohemian (Warm Ochre &amp; Olive)</option>
+              </select>
+            </div>
+
+            <!-- Wall Color -->
+            <div class="form-group">
+              <label>🖌️ Wall Paint Color</label>
+              <div class="color-picker-row">
+                <input type="color" id="designColorPicker" value="#E8ECE9">
+                <input type="text" id="designColorHex" class="form-control" value="#E8ECE9">
+                <span class="color-name-label" id="wallColorName">Soft Sage White</span>
+              </div>
+            </div>
+
+            <!-- Ceiling Color -->
+            <div class="form-group">
+              <label>☁️ Ceiling Paint Color</label>
+              <div class="color-picker-row">
+                <input type="color" id="ceilingColorPicker" value="#FFFFFF">
+                <input type="text" id="ceilingColorHex" class="form-control" value="#FFFFFF">
+                <span class="color-name-label" id="ceilingColorName">Pure Ceiling White</span>
+              </div>
+            </div>
+
+            <!-- Accent Wall Color -->
+            <div class="form-group">
+              <label>✨ Accent Wall Color (Optional)</label>
+              <div class="color-picker-row">
+                <input type="color" id="accentColorPicker" value="#C97B63">
+                <input type="text" id="accentColorHex" class="form-control" value="#C97B63">
+                <span class="color-name-label" id="accentColorName">Terracotta Sunset</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Live Tint Intensity: <b id="paintOpacityVal">35%</b></label>
+              <input type="range" id="paintOpacitySlider" min="10" max="80" step="5" value="35" class="form-control" style="cursor:pointer;">
+            </div>
+
+            <div class="form-group">
+              <label for="designCeilingPref">Ceiling Treatment &amp; Lighting</label>
+              <input type="text" id="designCeilingPref" class="form-control" value="Minimal Cove with 3000K Warm LED Strip">
+            </div>
+
+            <div class="form-group">
+              <label for="designInstructions">Special AI Styling Prompts</label>
+              <textarea id="designInstructions" class="form-control" rows="2" placeholder="e.g. Scandinavian light oak wooden floor, sage green accent wall behind bed..."></textarea>
+            </div>
+
+            <div class="studio-actions-row">
+              <a href="paint_studio.html" class="btn btn-block btn-lg btn-studio-link" style="text-decoration: none; text-align: center; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                🎨 Open Fullscreen Paint Studio ✦
+              </a>
+              <button class="btn btn-primary btn-block btn-lg" id="btnGenerateDesign">
+                <span class="btn-spinner" id="genSpinner" style="display:none;"></span>
+                ✨ Apply Colors &amp; Render Overlay
+              </button>
+              <div class="form-row-2 mt-2">
+                <button class="btn btn-secondary btn-block" id="btnResetDesign">
+                  🔄 Reset Colors
+                </button>
+                <button class="btn btn-accent btn-block" id="btnDownloadEdited">
+                  ⬇️ Download Design
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card glass-card">
+            <div class="canvas-header-bar">
+              <h3>🎨 Design &amp; Paint Visualizer</h3>
+              <div class="canvas-badge-box">
+                <span class="badge" id="canvasModeBadge">Real-time Visualizer</span>
+              </div>
+            </div>
+
+            <div id="genPreviewEmpty" class="empty-state">
+              <div class="empty-icon">🎨</div>
+              <p>Upload a room photo in Tab 1, then customize your wall and ceiling colors to preview the transformation!</p>
+            </div>
+
+            <div id="genPreviewBox" style="display:none; position:relative;">
+              <!-- Interactive Live Canvas with Image & Paint Overlay -->
+              <div class="interactive-canvas-container" id="interactiveCanvasContainer">
+                <canvas id="studioPaintCanvas"></canvas>
+              </div>
+
+              <div class="gen-meta-box">
+                <span class="badge" id="genStatusBadge">Interactive Studio Paint</span>
+                <p id="genMessage">Adjust wall and ceiling colors on the left to recolor room walls in real time.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: Projects & PDF Report -->
+      <section class="tab-pane" id="tab-projects">
+        <div class="card glass-card">
+          <div class="project-header-bar">
+            <div>
+              <h3>📁 Saved Projects Database</h3>
+              <p>Persisted in SQLite database via SQLAlchemy REST API</p>
+            </div>
+            <button class="btn btn-primary" id="btnCreateNewProjectModal">➕ Create New Project</button>
+          </div>
+
+          <div class="project-list-grid mt-4" id="projectListGrid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
