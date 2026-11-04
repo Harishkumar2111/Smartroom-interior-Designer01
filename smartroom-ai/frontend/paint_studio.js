@@ -1,5 +1,10 @@
-﻿// paint_studio.js - Full Interactive Wall & Ceiling Painter Engine
+// paint_studio.js - Full Interactive Wall & Ceiling Painter Engine
 const API_BASE = "http://127.0.0.1:8000/api";
+const SHARED_ROOM_KEYS = { originalUrl: "smartroom.originalRoomImage", editedUrl: "smartroom.paintedRoomImage" };
+function setOriginalRoomImage(value) { if (value) localStorage.setItem(SHARED_ROOM_KEYS.originalUrl, value); else localStorage.removeItem(SHARED_ROOM_KEYS.originalUrl); return value || null; }
+function getOriginalRoomImage() { return localStorage.getItem(SHARED_ROOM_KEYS.originalUrl) || null; }
+function setEditedRoomImage(value) { if (value) localStorage.setItem(SHARED_ROOM_KEYS.editedUrl, value); else localStorage.removeItem(SHARED_ROOM_KEYS.editedUrl); window.dispatchEvent(new CustomEvent("smartroom:painted-room", { detail: { dataUrl: value || null } })); return value || null; }
+function getEditedRoomImage() { return localStorage.getItem(SHARED_ROOM_KEYS.editedUrl) || null; }
 
 // 36 Curated Designer Swatches for Walls, Accents, and Ceilings
 const DESIGNER_PALETTES = [
@@ -54,7 +59,7 @@ const DESIGNER_PALETTES = [
 
 // Application State
 const state = {
-  currentTool: "brush", // brush, polygon, tint, eraser
+  currentTool: "brush", // brush, polygon, select, bucket, tint, eraser
   targetSurface: "wall", // wall, accent, ceiling, trim
   currentColor: "#E8ECE9",
   brushSize: 35,
@@ -65,6 +70,11 @@ const state = {
   history: [],
   historyStep: -1,
   maxHistory: 20
+  , selection: null,
+  selecting: false,
+  selectionStart: null,
+  selectionMode: "draw",
+  showOriginal: false
 };
 
 // DOM Elements
@@ -87,6 +97,11 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCanvasEvents();
   setupHeaderActions();
   setupShortcuts();
+  setupSelectionTools();
+  // Continue from the latest painted version when one exists, while keeping
+  // the original room image separately available for reset/before-after.
+  const sharedImage = getEditedRoomImage() || getOriginalRoomImage();
+  if (sharedImage) loadImageFromUrl(sharedImage);
 });
 
 // Toast Helper
@@ -156,6 +171,8 @@ function setupTools() {
       const toolNames = {
         brush: "Freehand Brush",
         polygon: "Polygon Wall Zone",
+        select: "Square / Rectangle Selection",
+        bucket: "Paint Bucket",
         tint: "Global Room Tint",
         eraser: "Paint Eraser"
       };
@@ -277,6 +294,9 @@ function setupSliders() {
 
 // 5. Upload & Dropzone Handling
 function setupUploadAndDropzone() {
+  // The dashboard is the single source of uploads. This studio only consumes the shared image.
+  return;
+  /*
   const dropzone = document.getElementById("emptyDropzone");
   const fileInput = document.getElementById("roomImageInput");
   const btnUpload = document.getElementById("btnUploadImage");
@@ -328,6 +348,7 @@ function setupUploadAndDropzone() {
     };
     reader.readAsDataURL(file);
   }
+  */
 }
 
 function loadImageFromUrl(url) {
@@ -416,7 +437,23 @@ function onPointerDown(e) {
   if (!state.baseImage) return;
   const pos = getCanvasCoordinates(e.clientX, e.clientY);
 
-  if (state.currentTool === "brush" || state.currentTool === "eraser") {
+  if (state.currentTool === "select") {
+    state.selecting = true;
+    if (state.selection && Math.abs(pos.x - (state.selection.x + state.selection.w)) < 18 && Math.abs(pos.y - (state.selection.y + state.selection.h)) < 18) {
+      state.selectionMode = "resize";
+      state.selectionStart = pos;
+    } else if (state.selection && pos.x >= state.selection.x && pos.x <= state.selection.x + state.selection.w && pos.y >= state.selection.y && pos.y <= state.selection.y + state.selection.h) {
+      state.selectionMode = "move";
+      state.selectionStart = { x: pos.x - state.selection.x, y: pos.y - state.selection.y };
+    } else {
+      state.selectionMode = "draw";
+      state.selectionStart = pos;
+      state.selection = { x: pos.x, y: pos.y, w: 0, h: 0 };
+    }
+    redrawOverlay();
+  } else if (state.currentTool === "bucket") {
+    applySelectedPaint();
+  } else if (state.currentTool === "brush" || state.currentTool === "eraser") {
     startBrushStroke(pos.x, pos.y);
   } else if (state.currentTool === "polygon") {
     addPolygonPoint(pos.x, pos.y);
@@ -424,12 +461,18 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
+  if (state.selecting) {
+    const pos = getCanvasCoordinates(e.clientX, e.clientY);
+    updateSelection(pos.x, pos.y);
+    return;
+  }
   if (!isDrawing) return;
   const pos = getCanvasCoordinates(e.clientX, e.clientY);
   continueBrushStroke(pos.x, pos.y);
 }
 
 function onPointerUp() {
+  if (state.selecting) { state.selecting = false; return; }
   if (isDrawing) {
     endBrushStroke();
   }
@@ -442,6 +485,11 @@ function startBrushStroke(x, y) {
   lastY = y;
 
   pCtx.save();
+  if (state.selection) {
+    pCtx.beginPath();
+    pCtx.rect(state.selection.x, state.selection.y, state.selection.w, state.selection.h);
+    pCtx.clip();
+  }
   pCtx.lineCap = "round";
   pCtx.lineJoin = "round";
   pCtx.lineWidth = state.brushSize;
@@ -477,6 +525,7 @@ function endBrushStroke() {
   pCtx.restore();
 
   saveHistoryState();
+  publishPaintedImage();
 }
 
 // --- Polygon Wall Zone Engine ---
@@ -497,6 +546,22 @@ function addPolygonPoint(x, y) {
 function redrawOverlay() {
   if (!oCtx) return;
   oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+  if (state.selection && state.selection.w > 2 && state.selection.h > 2) {
+    oCtx.save();
+    oCtx.fillStyle = "rgba(76,168,216,.16)";
+    oCtx.strokeStyle = "#2489bc";
+    oCtx.lineWidth = 2;
+    oCtx.setLineDash([7, 5]);
+    oCtx.fillRect(state.selection.x, state.selection.y, state.selection.w, state.selection.h);
+    oCtx.strokeRect(state.selection.x, state.selection.y, state.selection.w, state.selection.h);
+    oCtx.setLineDash([]);
+    oCtx.fillStyle = "#ffffff";
+    oCtx.fillRect(state.selection.x + state.selection.w - 7, state.selection.y + state.selection.h - 7, 14, 14);
+    oCtx.strokeStyle = "#2489bc";
+    oCtx.strokeRect(state.selection.x + state.selection.w - 7, state.selection.y + state.selection.h - 7, 14, 14);
+    oCtx.restore();
+  }
 
   if (state.polygonPoints.length === 0) return;
 
@@ -526,6 +591,68 @@ function redrawOverlay() {
   oCtx.restore();
 }
 
+function updateSelection(x, y) {
+  if (!state.selectionStart) return;
+  if (state.selectionMode === "move" && state.selection) {
+    state.selection.x = Math.max(0, Math.min(paintCanvas.width - state.selection.w, x - state.selectionStart.x));
+    state.selection.y = Math.max(0, Math.min(paintCanvas.height - state.selection.h, y - state.selectionStart.y));
+    redrawOverlay();
+    return;
+  }
+  if (state.selectionMode === "resize" && state.selection) {
+    state.selection.w = Math.max(8, Math.min(paintCanvas.width - state.selection.x, x - state.selection.x));
+    state.selection.h = Math.max(8, Math.min(paintCanvas.height - state.selection.y, y - state.selection.y));
+    if (document.getElementById("selectionShape")?.value === "square") state.selection.h = state.selection.w = Math.min(state.selection.w, state.selection.h);
+    redrawOverlay();
+    return;
+  }
+  let w = x - state.selectionStart.x;
+  let h = y - state.selectionStart.y;
+  if (document.getElementById("selectionShape")?.value === "square") {
+    const side = Math.max(Math.abs(w), Math.abs(h));
+    w = (w < 0 ? -1 : 1) * side;
+    h = (h < 0 ? -1 : 1) * side;
+  }
+  state.selection = { x: w < 0 ? state.selectionStart.x + w : state.selectionStart.x, y: h < 0 ? state.selectionStart.y + h : state.selectionStart.y, w: Math.abs(w), h: Math.abs(h) };
+  redrawOverlay();
+}
+
+function clearSelection() {
+  state.selection = null;
+  state.selectionStart = null;
+  redrawOverlay();
+}
+
+function applySelectedPaint() {
+  if (!state.baseImage || !state.selection || state.selection.w < 3 || state.selection.h < 3) {
+    showToast("Draw a square or rectangle on the room first", "error");
+    return;
+  }
+  pCtx.save();
+  pCtx.globalCompositeOperation = state.blendMode;
+  pCtx.fillStyle = hexToRgba(state.currentColor, state.opacity);
+  pCtx.fillRect(state.selection.x, state.selection.y, state.selection.w, state.selection.h);
+  if (state.targetSurface === "ceiling") applyCeilingDesign(state.selection);
+  pCtx.restore();
+  saveHistoryState();
+  publishPaintedImage();
+  showToast(`${state.targetSurface === "ceiling" ? "Ceiling" : "Wall"} paint applied to selected area`, "success");
+}
+
+function applyCeilingDesign(rect) {
+  const design = document.getElementById("ceilingDesignSelect")?.value || "plain";
+  if (design === "plain") return;
+  pCtx.save();
+  pCtx.globalAlpha = Math.min(0.45, state.opacity + 0.1);
+  pCtx.strokeStyle = design === "wooden" ? "#9b6a42" : design === "led" ? "#f5c451" : "#ffffff";
+  pCtx.lineWidth = design === "border" ? 12 : 3;
+  if (design === "modern-false" || design === "border" || design === "led") pCtx.strokeRect(rect.x + 8, rect.y + 8, rect.w - 16, rect.h - 16);
+  if (design === "wooden" || design === "decorative") {
+    for (let x = rect.x; x < rect.x + rect.w; x += 28) { pCtx.beginPath(); pCtx.moveTo(x, rect.y); pCtx.lineTo(x, rect.y + rect.h); pCtx.stroke(); }
+  }
+  pCtx.restore();
+}
+
 function finishPolygonFill() {
   if (state.polygonPoints.length < 3) {
     showToast("Click at least 3 points on the wall to form a zone!", "error");
@@ -547,6 +674,7 @@ function finishPolygonFill() {
 
   cancelPolygon();
   saveHistoryState();
+  publishPaintedImage();
   showToast("Wall zone colored successfully!", "success");
 }
 
@@ -571,6 +699,7 @@ function applyGlobalTint() {
   pCtx.fillStyle = hexToRgba(state.currentColor, state.opacity);
   pCtx.fillRect(0, 0, paintCanvas.width, paintCanvas.height);
   pCtx.restore();
+  publishPaintedImage();
 }
 
 // 7. Undo / Redo & History Stack
@@ -592,6 +721,7 @@ function undo() {
   if (state.historyStep > 0) {
     state.historyStep--;
     pCtx.putImageData(state.history[state.historyStep], 0, 0);
+    publishPaintedImage();
     showToast("Undo applied", "info");
   } else {
     showToast("At beginning of history", "info");
@@ -602,6 +732,7 @@ function redo() {
   if (state.historyStep < state.history.length - 1) {
     state.historyStep++;
     pCtx.putImageData(state.history[state.historyStep], 0, 0);
+    publishPaintedImage();
     showToast("Redo applied", "info");
   }
 }
@@ -614,40 +745,78 @@ function setupHeaderActions() {
   document.getElementById("btnClearCanvas").addEventListener("click", () => {
     if (!state.baseImage) return;
     if (confirm("Reset all applied paint layers and restore original room photo?")) {
-      redrawBaseImage();
+      const original = getOriginalRoomImage();
+      if (original) {
+        loadImageFromUrl(original);
+        setEditedRoomImage(original);
+      } else {
+        redrawBaseImage();
+        publishPaintedImage();
+      }
       cancelPolygon();
-      saveHistoryState();
       showToast("Canvas restored to original room photo", "info");
     }
   });
 
-  document.getElementById("btnDownloadArt").addEventListener("click", () => {
+  // Only PDF Download - generates professional PDF report
+  document.getElementById("btnDownloadArt")?.addEventListener("click", () => {
     if (!paintCanvas || !state.baseImage) {
       showToast("Please upload and paint a room photo first!", "error");
       return;
     }
+    publishPaintedImage();
+    showToast("Generating AI Smart Room PDF report...", "info");
+    try {
+      downloadCanvasAsPdf(paintCanvas, "AI Smart Room Interior Designer", [
+        { label: "Design Section", value: "Paint & Ceiling Studio" },
+        { label: "Target Surface", value: state.targetSurface.toUpperCase() },
+        { label: "Selected Wall Color", value: state.currentColor },
+        { label: "Ceiling Treatment", value: document.getElementById("ceilingDesignSelect")?.value || "Modern Finished Ceiling" },
+        { label: "Date Generated", value: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) },
+        { label: "Status", value: "Custom Painted Room Layer Ready for Furniture Catalog" }
+      ]);
+      showToast("Design PDF downloaded successfully!", "success");
+    } catch (err) {
+      showToast("Error generating PDF: " + err.message, "error");
+    }
+  });
 
-    // Create export canvas with metadata footer
-    const exportCanvas = document.createElement("canvas");
-    exportCanvas.width = paintCanvas.width;
-    exportCanvas.height = paintCanvas.height + 40;
-    const eCtx = exportCanvas.getContext("2d");
+  // Transfer to Furniture Catalog button
+  document.getElementById("btnGoToFurniture")?.addEventListener("click", () => {
+    publishPaintedImage();
+  });
+}
 
-    // Copy painting
-    eCtx.drawImage(paintCanvas, 0, 0);
+function publishPaintedImage() {
+  if (!paintCanvas || !state.baseImage || !paintCanvas.width) return;
+  try {
+    const dataUrl = paintCanvas.toDataURL("image/jpeg", 0.90);
+    setEditedRoomImage(dataUrl);
+    localStorage.setItem("smartroom.paintedRoomUpdatedAt", String(Date.now()));
+  } catch (err) {
+    showToast("Painted preview is ready, but browser storage is full.", "error");
+  }
+}
 
-    // Architectural Footer
-    eCtx.fillStyle = "#0f131a";
-    eCtx.fillRect(0, paintCanvas.height, exportCanvas.width, 40);
-    eCtx.fillStyle = "#ffffff";
-    eCtx.font = "bold 14px 'Inter', sans-serif";
-    eCtx.fillText(`SmartRoom AI Paint Studio — Target: ${state.targetSurface.toUpperCase()} | Color: ${state.currentColor}`, 20, paintCanvas.height + 25);
-
-    const link = document.createElement("a");
-    link.download = `SmartRoom_Paint_${state.targetSurface}_${Date.now()}.png`;
-    link.href = exportCanvas.toDataURL("image/png");
-    link.click();
-    showToast("Design exported & downloaded successfully!", "success");
+function setupSelectionTools() {
+  document.getElementById("btnApplyPaint")?.addEventListener("click", applySelectedPaint);
+  document.getElementById("btnClearSelection")?.addEventListener("click", clearSelection);
+  document.getElementById("btnSavePainted")?.addEventListener("click", () => {
+    if (!state.baseImage) { showToast("Upload a room image first", "error"); return; }
+    publishPaintedImage();
+    showToast("Painted room saved and transferred to Furniture Catalog!", "success");
+  });
+  document.getElementById("btnBeforeAfter")?.addEventListener("click", () => {
+    if (!state.baseImage) return;
+    if (!state.showOriginal) {
+      state.previewSnapshot = pCtx.getImageData(0, 0, paintCanvas.width, paintCanvas.height);
+      redrawBaseImage();
+      state.showOriginal = true;
+    } else {
+      pCtx.putImageData(state.previewSnapshot, 0, 0);
+      state.showOriginal = false;
+    }
+    document.getElementById("btnBeforeAfter").classList.toggle("active", state.showOriginal);
   });
 }
 
@@ -681,5 +850,161 @@ function hexToRgba(hex, alpha = 1) {
   const g = parseInt(c.substring(2, 4), 16) || 0;
   const b = parseInt(c.substring(4, 6), 16) || 0;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// Pure Client-side PDF Generation (No external dependencies, 100% reliable)
+function downloadCanvasAsPdf(canvas, title, metadata = []) {
+  const imgDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+  const base64Data = imgDataUrl.split(",")[1];
+  const binaryImg = atob(base64Data);
+  const imgLength = binaryImg.length;
+  const imgBytes = new Uint8Array(imgLength);
+  for (let i = 0; i < imgLength; i++) {
+    imgBytes[i] = binaryImg.charCodeAt(i);
+  }
+
+  const pageWidth = 595.28;
+  const pageHeight = 841.89;
+  const margin = 36;
+  const contentWidth = pageWidth - (margin * 2);
+  const headerHeight = 70;
+
+  const imgAspectRatio = canvas.width / canvas.height;
+  let renderWidth = contentWidth;
+  let renderHeight = renderWidth / imgAspectRatio;
+  const maxImgHeight = 440;
+  if (renderHeight > maxImgHeight) {
+    renderHeight = maxImgHeight;
+    renderWidth = renderHeight * imgAspectRatio;
+  }
+  const imgX = margin + (contentWidth - renderWidth) / 2;
+  const imgY = pageHeight - margin - headerHeight - 15 - renderHeight;
+
+  let contentStream = `
+q
+0.008 0.518 0.780 rg
+${margin} ${pageHeight - margin - headerHeight} ${contentWidth} ${headerHeight} re f
+Q
+BT
+/F1 18 Tf
+1 1 1 rg
+${margin + 16} ${pageHeight - margin - 30} Td
+(${title.replace(/[()\\]/g, "")}) Tj
+ET
+BT
+/F2 10 Tf
+0.9 0.95 1 rg
+${margin + 16} ${pageHeight - margin - 48} Td
+(Smart Architectural Interior Design & Spatial Visualization) Tj
+ET
+q
+${renderWidth.toFixed(2)} 0 0 ${renderHeight.toFixed(2)} ${imgX.toFixed(2)} ${imgY.toFixed(2)} cm
+/Im1 Do
+Q
+q
+0.8 0.85 0.9 RG
+1 w
+${imgX.toFixed(2)} ${imgY.toFixed(2)} ${renderWidth.toFixed(2)} ${renderHeight.toFixed(2)} re S
+Q
+`;
+
+  let metaY = imgY - 24;
+  contentStream += `
+BT
+/F1 12 Tf
+0.1 0.15 0.2 rg
+${margin} ${metaY} Td
+(Design & Finish Specifications) Tj
+ET
+`;
+  metaY -= 18;
+
+  metadata.forEach(m => {
+    const line = `${m.label}: ${m.value}`.replace(/[()\\]/g, "");
+    contentStream += `
+BT
+/F2 9.5 Tf
+0.25 0.3 0.35 rg
+${margin} ${metaY} Td
+(${line}) Tj
+ET
+`;
+    metaY -= 15;
+  });
+
+  contentStream += `
+BT
+/F2 8 Tf
+0.5 0.5 0.5 rg
+${margin} ${margin} Td
+(Generated by AI Smart Room Interior Designer - Confidential Architectural Report) Tj
+ET
+`;
+
+  const enc = new TextEncoder();
+  const obj1 = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
+  const obj2 = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
+  const obj3 = `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> /XObject << /Im1 7 0 R >> >> >>\nendobj\n`;
+  const streamBytes = enc.encode(contentStream);
+  const obj4Header = `4 0 obj\n<< /Length ${streamBytes.length} >>\nstream\n`;
+  const obj4Trailer = "\nendstream\nendobj\n";
+  const obj5 = "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n";
+  const obj6 = "6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
+  const obj7Header = `7 0 obj\n<< /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgBytes.length} >>\nstream\n`;
+  const obj7Trailer = "\nendstream\nendobj\n";
+
+  const headerStr = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
+  let offset = headerStr.length;
+  const offsets = [0];
+
+  offsets.push(offset); offset += enc.encode(obj1).length;
+  offsets.push(offset); offset += enc.encode(obj2).length;
+  offsets.push(offset); offset += enc.encode(obj3).length;
+  offsets.push(offset); offset += enc.encode(obj4Header).length + streamBytes.length + enc.encode(obj4Trailer).length;
+  offsets.push(offset); offset += enc.encode(obj5).length;
+  offsets.push(offset); offset += enc.encode(obj6).length;
+  offsets.push(offset); offset += enc.encode(obj7Header).length + imgBytes.length + enc.encode(obj7Trailer).length;
+
+  const xrefOffset = offset;
+  let xrefStr = `xref\n0 8\n0000000000 65535 f \n`;
+  for (let i = 1; i <= 7; i++) {
+    xrefStr += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+  }
+  const trailerStr = `trailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+
+  const parts = [
+    enc.encode(headerStr),
+    enc.encode(obj1),
+    enc.encode(obj2),
+    enc.encode(obj3),
+    enc.encode(obj4Header),
+    streamBytes,
+    enc.encode(obj4Trailer),
+    enc.encode(obj5),
+    enc.encode(obj6),
+    enc.encode(obj7Header),
+    imgBytes,
+    enc.encode(obj7Trailer),
+    enc.encode(xrefStr),
+    enc.encode(trailerStr)
+  ];
+
+  let totalLen = parts.reduce((acc, p) => acc + p.length, 0);
+  const fullBytes = new Uint8Array(totalLen);
+  let cur = 0;
+  for (let p of parts) {
+    fullBytes.set(p, cur);
+    cur += p.length;
+  }
+
+  const blob = new Blob([fullBytes], { type: "application/pdf" });
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.download = `AI_Smart_Room_Paint_Design_${Date.now()}.pdf`;
+  link.href = blobUrl;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 }
 

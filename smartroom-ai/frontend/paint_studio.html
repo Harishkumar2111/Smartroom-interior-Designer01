@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
-  <title>SmartRoom Studio — Interactive Wall &amp; Ceiling Painter</title>
-  <meta name="description" content="Dedicated interactive room painting studio. Upload any room photo, paint walls and ceilings with brushes, polygon fills, and designer paint palettes.">
+  <title>Paint &amp; Ceiling Studio | Smart Room AI</title>
+  <meta name="description" content="Dedicated interactive room painting studio. Paint the room shared from AI Room Analyzer with brushes, selections, and designer palettes.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="paint_studio.css?v=light-20261030">
+  <link rel="stylesheet" href="paint_studio.css?v=20261102-1">
 </head>
 <body>
   <div class="studio-app">
@@ -41,15 +41,15 @@
       </div>
 
       <div class="header-right">
-        <label class="btn btn-outline" id="btnUploadImage">
-          📷 Upload Room Photo
-          <input type="file" id="roomImageInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
-        </label>
+        <span class="studio-source-note">Image synced from AI Room Analyzer</span>
         <button class="btn btn-secondary" id="btnClearCanvas" title="Reset all applied paint layers">
           🔄 Reset Paint
         </button>
-        <button class="btn btn-primary" id="btnDownloadArt">
-          ⬇️ Download Design
+        <a href="index.html#tab-furniture" class="btn btn-primary" id="btnGoToFurniture" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;" title="Transfer painted room to Furniture Catalog">
+          🛋️ Go to Furniture Catalog →
+        </a>
+        <button class="btn btn-accent" id="btnDownloadArt" title="Download design as PDF report">
+          📄 Download PDF
         </button>
       </div>
     </header>
@@ -72,6 +72,14 @@
               <span class="tool-icon">📐</span>
               <span class="tool-name">Polygon Wall Zone</span>
             </button>
+            <button class="tool-btn" data-tool="select" id="toolSelect">
+              <span class="tool-icon">▣</span>
+              <span class="tool-name">Square Selection</span>
+            </button>
+            <button class="tool-btn" data-tool="bucket" id="toolBucket">
+              <span class="tool-icon">🪣</span>
+              <span class="tool-name">Paint Bucket</span>
+            </button>
             <button class="tool-btn" data-tool="tint" id="toolTint">
               <span class="tool-icon">✨</span>
               <span class="tool-name">Global Room Tint</span>
@@ -80,6 +88,14 @@
               <span class="tool-icon">🧼</span>
               <span class="tool-name">Paint Eraser</span>
             </button>
+          </div>
+
+          <div class="selection-actions sidebar-card">
+            <div class="card-header"><h3>Selected Area</h3></div>
+            <p class="selection-help">Drag a square or rectangle over the wall or ceiling, then apply the selected color only inside it.</p>
+            <div class="selection-buttons"><button class="btn btn-accent btn-sm" id="btnApplyPaint">Apply Paint</button><button class="btn btn-secondary btn-sm" id="btnClearSelection">Clear Selection</button></div>
+            <label class="form-row"><span>Selection Shape</span><select class="form-select" id="selectionShape"><option value="rectangle">Rectangle</option><option value="square">Square</option></select></label>
+            <label class="form-row"><span>Ceiling Design</span><select class="form-select" id="ceilingDesignSelect"><option value="plain">Plain ceiling</option><option value="modern-false">Modern false ceiling</option><option value="led">LED ceiling</option><option value="wooden">Wooden ceiling</option><option value="border">Border ceiling</option><option value="decorative">Decorative pattern</option></select></label>
           </div>
 
           <!-- Tool Settings: Brush Size & Opacity -->
@@ -156,6 +172,8 @@
           <button class="toolbar-btn" id="btnRedo" title="Redo stroke (Ctrl+Y)">
             ↪ Redo
           </button>
+          <button class="toolbar-btn" id="btnBeforeAfter">Before / After</button>
+          <button class="toolbar-btn" id="btnSavePainted" title="Save painted room design and sync to Furniture Catalog">💾 Save &amp; Sync to Furniture Catalog</button>
           <div class="toolbar-sep"></div>
           <span class="canvas-zoom-info" id="polygonTip" style="display:none;">
             📐 Click points on wall to define corners. Double-click or click "Fill Zone" to complete!
@@ -172,9 +190,10 @@
         <div class="empty-canvas-dropzone" id="emptyDropzone">
           <div class="dropzone-inner">
             <div class="drop-icon">🎨</div>
-            <h2>Drop your room photo here to start painting</h2>
-            <p>Support for JPG, PNG, and WebP up to 15MB. Or choose an architectural sample room below:</p>
-            <div class="sample-rooms-row">
+            <h2>No room image loaded</h2>
+            <p>Your shared room image will appear here automatically. Return to the dashboard to choose a different room.</p>
+            <!-- Uploading is intentionally available only in AI Room Analyzer. -->
+            <div class="sample-rooms-row" style="display:none;">
               <button class="sample-btn" data-url="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&auto=format&fit=crop&q=80">
                 🛋️ Living Room Sample
               </button>
@@ -243,6 +262,6 @@
     <div class="toast-container" id="toastContainer"></div>
   </div>
 
-  <script src="paint_studio.js"></script>
+  <script src="paint_studio.js?v=20261102-1"></script>
 </body>
 </html>

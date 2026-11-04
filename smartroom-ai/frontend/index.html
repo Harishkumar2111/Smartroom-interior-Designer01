@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
-  <title>Smart Room AI — Intelligent Interior Designer</title>
-  <meta name="description" content="AI Smart Room Interior Designer powered by Python, FastAPI, Computer Vision, and Generative AI.">
+  <title>Furniture Catalog | Smart Room AI</title>
+  <meta name="description"
+    content="AI Smart Room Interior Designer powered by Python, FastAPI, Computer Vision, and Generative AI.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=light-20261030">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20261102-1">
 </head>
+
 <body>
   <!-- Mobile Header -->
   <header class="mobile-header">
@@ -60,7 +65,8 @@
           <span class="icon">✨</span>
           <span class="label">AI Design Studio</span>
         </button>
-        <a href="paint_studio.html" class="nav-btn paint-studio-highlight" id="navPaintStudio" style="text-decoration:none;">
+        <a href="paint_studio.html" class="nav-btn paint-studio-highlight" id="navPaintStudio"
+          style="text-decoration:none;">
           <span class="icon">🖌️</span>
           <span class="label">Paint &amp; Ceiling Studio ✦</span>
         </a>
@@ -79,7 +85,8 @@
       <header class="topbar">
         <div class="topbar-left">
           <h1 id="pageTitle">🔍 AI Room Analyzer</h1>
-          <p id="pageSubtitle">Upload your room photo to detect architectural flow, color palettes, and spatial placement.</p>
+          <p id="pageSubtitle">Upload your room photo to detect architectural flow, color palettes, and spatial
+            placement.</p>
         </div>
         <div class="topbar-right">
           <button class="btn btn-primary" id="btnQuickSave">💾 Save Project</button>
@@ -147,7 +154,8 @@
 
             <div class="form-group">
               <label for="analyzerNotes">Special Requests or Needs</label>
-              <textarea id="analyzerNotes" class="form-control" rows="2" placeholder="e.g. Empty room blank canvas, need ample storage, warm lighting, study corner..."></textarea>
+              <textarea id="analyzerNotes" class="form-control" rows="2"
+                placeholder="e.g. Empty room blank canvas, need ample storage, warm lighting, study corner..."></textarea>
             </div>
 
             <button class="btn btn-primary btn-block btn-lg" id="btnAnalyzeRoom">
@@ -161,7 +169,8 @@
             <h3>📊 Analysis &amp; Space Critique</h3>
             <div id="analyzerEmptyState" class="empty-state">
               <div class="empty-icon">🛋️</div>
-              <p>Upload a room photo and click "Run AI Room Analysis" to inspect detected features, spatial flow, and palettes.</p>
+              <p>Upload a room photo and click "Run AI Room Analysis" to inspect detected features, spatial flow, and
+                palettes.</p>
             </div>
 
             <div id="analyzerOutput" style="display:none;">
@@ -317,28 +326,139 @@
 
       <!-- TAB 4: Furniture Catalog -->
       <section class="tab-pane" id="tab-furniture">
-        <div class="card glass-card filter-bar">
-          <div class="form-row-3">
-            <input type="text" id="furnSearch" class="form-control" placeholder="Search furniture (e.g. bed, sofa, desk)...">
-            <select id="furnCategoryFilter" class="form-control">
+        <div class="design-workspace">
+          <aside class="catalog-panel card glass-card">
+            <div class="catalog-heading">
+              <div>
+                <span class="eyebrow">ROOM EDITOR</span>
+                <h3>Furniture Catalog</h3>
+              </div>
+              <span class="catalog-count" id="catalogCount">0 pieces</span>
+            </div>
+            <div class="catalog-search">
+              <span>⌕</span>
+              <input type="search" id="furnSearch" placeholder="Search desks, chairs, laptops..." aria-label="Search furniture">
+            </div>
+            <div class="catalog-filters" id="furnitureCategoryPills">
+              <button class="category-pill active" data-category="">All</button>
+              <button class="category-pill" data-category="Desk">Desks &amp; Workstations</button>
+              <button class="category-pill" data-category="Chair">Office &amp; Chairs</button>
+              <button class="category-pill" data-category="Electronics">Laptops &amp; Tech</button>
+              <button class="category-pill" data-category="Sofa">Sofas</button>
+              <button class="category-pill" data-category="Bed">Beds</button>
+              <button class="category-pill" data-category="Table">Tables</button>
+              <button class="category-pill" data-category="Storage">Wardrobes</button>
+            </div>
+            <select id="furnCategoryFilter" class="form-control catalog-hidden-filter">
               <option value="">All Categories</option>
+              <option value="Desk">Desks &amp; Workstations</option>
+              <option value="Chair">Chairs</option>
+              <option value="Electronics">Laptops &amp; Tech</option>
               <option value="Bed">Beds</option>
               <option value="Sofa">Sofas</option>
               <option value="Table">Tables</option>
-              <option value="Desk">Desks</option>
               <option value="Storage">Storage / Wardrobe</option>
-              <option value="Chair">Chairs</option>
             </select>
-            <select id="furnBudgetFilter" class="form-control">
+            <select id="furnBudgetFilter" class="form-control catalog-hidden-filter">
               <option value="">Any Price</option>
               <option value="25000">Under ₹25,000</option>
               <option value="50000">Under ₹50,000</option>
               <option value="80000">Under ₹80,000</option>
             </select>
-          </div>
-        </div>
+            <div class="catalog-scroll">
+              <div class="furniture-grid" id="furnitureGrid"></div>
+            </div>
+          </aside>
 
-        <div class="furniture-grid mt-4" id="furnitureGrid"></div>
+          <section class="room-editor-panel card glass-card">
+            <div class="workspace-toolbar top-toolbar">
+              <div>
+                <span class="eyebrow">LIVE CANVAS</span>
+                <h3>Room Preview &amp; Arrangement</h3>
+              </div>
+              <div class="toolbar-actions">
+                <button class="btn btn-secondary" id="workspacePaintBtn" title="Customize wall &amp; ceiling paint">🎨 Paint Studio</button>
+                <button class="btn btn-secondary" id="workspaceUndoBtn" title="Undo previous action (Ctrl+Z)">↶ Undo</button>
+                <button class="btn btn-secondary" id="workspaceRedoBtn" title="Redo action (Ctrl+Y)">↷ Redo</button>
+                <button class="btn btn-secondary" id="workspaceResetBtn" title="Clear all placed furniture">🔄 Reset</button>
+                <button class="btn btn-secondary" id="workspaceLoadBtn" title="Reopen previously saved room design">📂 Reopen Design</button>
+                <button class="btn btn-primary" id="workspaceSaveBtn" title="Save complete room design">💾 Save Design</button>
+                <button class="btn btn-accent" id="workspaceDownloadPdfBtn" title="Generate professional PDF report">📄 Download PDF</button>
+              </div>
+            </div>
+
+            <!-- Room Background View Selector & Thumbnails -->
+            <div class="room-view-toggle-bar" id="roomViewToggleBar">
+              <div class="view-indicator-group">
+                <span class="view-label">Background Layer:</span>
+                <button class="view-toggle-btn active" id="viewPaintedRoomBtn" title="Show latest painted room as background">
+                  🎨 Final Painted Room
+                </button>
+                <button class="view-toggle-btn" id="viewOriginalRoomBtn" title="Show original unpainted room photo">
+                  🖼️ Original Upload
+                </button>
+              </div>
+              <div class="view-thumbnails-row">
+                <div class="mini-thumb-card active" id="thumbPaintedCard" title="Final painted room image">
+                  <img id="thumbPaintedImg" alt="Painted Room" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='26'%3E%3Crect width='100%25' height='100%25' fill='%23e2e8f0'/%3E%3C/svg%3E" />
+                  <span>Painted Design</span>
+                </div>
+                <div class="mini-thumb-card" id="thumbOriginalCard" title="Original room photo">
+                  <img id="thumbOriginalImg" alt="Original Room" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='26'%3E%3Crect width='100%25' height='100%25' fill='%23e2e8f0'/%3E%3C/svg%3E" />
+                  <span>Original Photo</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="room-canvas-shell" id="roomCanvasShell">
+              <canvas id="roomDesignCanvas"></canvas>
+              <div class="workspace-empty" id="workspaceEmpty">
+                <div class="empty-icon">🖼️</div>
+                <h4>Upload a room in AI Room Analyzer to start</h4>
+                <p>The shared original or latest painted image appears here automatically and stays underneath every furniture placement.</p>
+              </div>
+            </div>
+
+            <div class="workspace-toolbar bottom-toolbar">
+              <div class="canvas-status" id="canvasStatus">No room image loaded</div>
+              <div class="zoom-actions">
+                <button class="icon-btn" id="workspaceZoomOut" title="Zoom Out">−</button>
+                <span id="workspaceZoomLabel">100%</span>
+                <button class="icon-btn" id="workspaceZoomIn" title="Zoom In">+</button>
+                <button class="btn btn-secondary" id="workspaceFit">Fit to Screen</button>
+                <button class="btn btn-secondary" id="workspaceFullscreen">⛶ Full Screen</button>
+              </div>
+            </div>
+
+            <!-- Selected Furniture Controls Bar with Resizing, Rotation, & Quick Scale -->
+            <div class="selected-furniture-bar" id="selectedFurnitureBar" hidden>
+              <div class="furniture-title-group">
+                <b id="selectedFurnitureName">Selected furniture</b>
+                <span>Drag to reposition · Drag corner handle or use buttons to resize</span>
+              </div>
+              <div class="furniture-controls-group">
+                <label>Width (ft)
+                  <input type="number" id="furnitureWidth" min="0.5" max="30" step="0.1">
+                </label>
+                <label>Height (ft)
+                  <input type="number" id="furnitureHeight" min="0.5" max="20" step="0.1">
+                </label>
+                <label>Depth (ft)
+                  <input type="number" id="furnitureDepth" min="0.2" max="20" step="0.1">
+                </label>
+                <label>Rotation
+                  <input type="range" id="furnitureRotation" min="-180" max="180" value="0">
+                </label>
+                <div class="quick-size-buttons">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnScaleUp" title="Increase size by 10%">➕ Larger</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnScaleDown" title="Decrease size by 10%">➖ Smaller</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnRotate90" title="Rotate 90 degrees">↺ 90°</button>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" id="deleteFurniture">🗑️ Delete</button>
+              </div>
+            </div>
+          </section>
+        </div>
       </section>
 
       <!-- TAB 5: AI Design Studio & Interactive Room Painter -->
@@ -346,7 +466,8 @@
         <div class="grid-2col">
           <div class="card glass-card">
             <h3>🎨 Room Paint &amp; Design Studio</h3>
-            <p class="section-desc">Select wall, ceiling, and accent colors to customize your room. Generate architectural overlays or open the interactive Paint Studio.</p>
+            <p class="section-desc">Select wall, ceiling, and accent colors to customize your room. Generate
+              architectural overlays or open the interactive Paint Studio.</p>
 
             <!-- Quick Style Harmonizer -->
             <div class="form-group">
@@ -395,21 +516,25 @@
 
             <div class="form-group">
               <label>Live Tint Intensity: <b id="paintOpacityVal">35%</b></label>
-              <input type="range" id="paintOpacitySlider" min="10" max="80" step="5" value="35" class="form-control" style="cursor:pointer;">
+              <input type="range" id="paintOpacitySlider" min="10" max="80" step="5" value="35" class="form-control"
+                style="cursor:pointer;">
             </div>
 
             <div class="form-group">
               <label for="designCeilingPref">Ceiling Treatment &amp; Lighting</label>
-              <input type="text" id="designCeilingPref" class="form-control" value="Minimal Cove with 3000K Warm LED Strip">
+              <input type="text" id="designCeilingPref" class="form-control"
+                value="Minimal Cove with 3000K Warm LED Strip">
             </div>
 
             <div class="form-group">
               <label for="designInstructions">Special AI Styling Prompts</label>
-              <textarea id="designInstructions" class="form-control" rows="2" placeholder="e.g. Scandinavian light oak wooden floor, sage green accent wall behind bed..."></textarea>
+              <textarea id="designInstructions" class="form-control" rows="2"
+                placeholder="e.g. Scandinavian light oak wooden floor, sage green accent wall behind bed..."></textarea>
             </div>
 
             <div class="studio-actions-row">
-              <a href="paint_studio.html" class="btn btn-block btn-lg btn-studio-link" style="text-decoration: none; text-align: center; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <a href="paint_studio.html" class="btn btn-block btn-lg btn-studio-link"
+                style="text-decoration: none; text-align: center; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 🎨 Open Fullscreen Paint Studio ✦
               </a>
               <button class="btn btn-primary btn-block btn-lg" id="btnGenerateDesign">
@@ -420,8 +545,8 @@
                 <button class="btn btn-secondary btn-block" id="btnResetDesign">
                   🔄 Reset Colors
                 </button>
-                <button class="btn btn-accent btn-block" id="btnDownloadEdited">
-                  ⬇️ Download Design
+                <button class="btn btn-accent btn-block" id="btnDownloadEdited" title="Download final design as PDF">
+                  📄 Download PDF
                 </button>
               </div>
             </div>
@@ -437,7 +562,8 @@
 
             <div id="genPreviewEmpty" class="empty-state">
               <div class="empty-icon">🎨</div>
-              <p>Upload a room photo in Tab 1, then customize your wall and ceiling colors to preview the transformation!</p>
+              <p>Upload a room photo in Tab 1, then customize your wall and ceiling colors to preview the
+                transformation!</p>
             </div>
 
             <div id="genPreviewBox" style="display:none; position:relative;">
@@ -475,6 +601,28 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="script.js"></script>
+  <!-- Saved Designs Modal -->
+  <div class="saved-designs-modal" id="savedDesignsModal" hidden aria-modal="true" role="dialog">
+    <div class="saved-designs-dialog card">
+      <div class="saved-designs-header">
+        <div>
+          <h3>📂 Reopen Saved Room Designs</h3>
+          <p>Load previous room layouts, paint customizations, and furniture arrangements.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btnCloseSavedDesignsModal">✕ Close</button>
+      </div>
+      <div class="saved-designs-body" id="savedDesignsListContainer">
+        <div class="empty-state">No saved designs found. Click "Save Design" in the Room Editor to store your work!</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="image-lightbox" id="imageLightbox" hidden aria-modal="true" role="dialog">
+    <div class="lightbox-toolbar"><span>Room image preview</span><button class="btn btn-secondary" id="lightboxZoomOut">-</button><span id="lightboxZoomLabel">100%</span><button class="btn btn-secondary" id="lightboxZoomIn">+</button><button class="btn btn-secondary" id="lightboxFit">Fit</button><button class="btn btn-secondary" id="lightboxReset">Reset</button><button class="btn btn-primary" id="lightboxClose">Close</button></div>
+    <div class="lightbox-stage"><img id="lightboxImage" alt="Full-screen uploaded room preview"></div>
+  </div>
+
+  <script src="script.js?v=20261102-1"></script>
 </body>
+
 </html>

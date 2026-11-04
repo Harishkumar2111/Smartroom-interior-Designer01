@@ -6,15 +6,15 @@ The application combines a responsive browser interface with a FastAPI backend, 
 
 ## Highlights
 
-- Upload and securely validate room images in JPEG, PNG, and WebP formats.
-- Analyse a room's style, palette, lighting, materials, and improvement opportunities.
-- Calculate floor area, wall area, volume, paint quantity, and unit conversions.
-- Browse and filter a furniture catalogue by category, price, style, and search term.
-- Generate colour-overlay design concepts for fast visual exploration.
-- Save, update, list, and delete interior-design projects.
-- Export a polished PDF project report.
-- Use Google Gemini Vision when configured, with a transparent local fallback when it is not.
-- Run the complete application from one FastAPI development server, including the frontend.
+- **Single Room Upload & Centralized Image Pipeline**: Upload once in AI Room Analyzer; seamlessly transfers to Paint & Ceiling Studio and Furniture Catalog.
+- **Paint & Ceiling Studio**: Precision wall coloring, accent walls, and false ceiling designs with real-time transfer to the Furniture Catalog.
+- **Office Furniture Catalog**: Expanded catalog featuring Modern office desks, Wooden desks, Computer desks with drawers, Laptops, Office workstations, Single office chairs, Ergonomic mesh chairs, and Adjustable computer chairs.
+- **Interactive Live Room Workspace**: Place furniture directly onto the final painted room image with boundary collision clamping preventing pieces from spilling outside the room walls.
+- **Dynamic Sizing & Rotation**: Interactive corner drag handles, quick enlargement/shrinking (+/- 10%), 90-degree rotations, and precise dimension inputs.
+- **Multi-Level Undo, Redo & Reset**: Full history snapshots allow reversing movements, resizing, rotations, additions, and removals, plus safe reset preserving room backgrounds.
+- **Save & Reopen Complete Designs**: Persist final painted designs with complete furniture arrangements both locally and to SQLite; reopen saved designs with one click.
+- **Professional PDF Download Only**: Direct generation of comprehensive interior design PDF reports containing the high-res final room preview, color scheme, placed furniture schedule, and estimated investment.
+- **Robust Fallbacks & Offline Capability**: Works reliably with FastAPI backend or frontend-only deployment.
 
 ## Technology
 
